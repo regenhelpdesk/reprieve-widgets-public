@@ -1,0 +1,245 @@
+<!-- Remote Command Widget -->
+<div class="remote-command-widget">
+  <!-- Widget Header -->
+  <div class="widget-header">
+    <h4>Remote Commands</h4>
+  </div>
+
+  <!-- Config Error Display -->
+  <div class="config-error" *ngIf="!configValid">
+    <div class="error-header">
+      <strong>Configuration Error</strong>
+    </div>
+    <p>The following required configuration is missing:</p>
+    <ul>
+      <li *ngFor="let missing of missingConfig">{{ missing }}</li>
+    </ul>
+    <p class="error-help">
+      Please configure the widget with the required settings before using it.
+    </p>
+  </div>
+
+  <!-- Main Widget Content (only shown if config is valid) -->
+  <div *ngIf="configValid">
+
+  <!-- Target Devices Section -->
+  <div class="section">
+    <div class="section-header">Target Devices</div>
+
+    <div *ngIf="loadingDevices" class="loading-devices">
+      Loading devices...
+    </div>
+
+    <div class="device-list" *ngIf="!loadingDevices">
+      <label class="device-item" *ngFor="let device of availableDevices">
+        <input
+          type="checkbox"
+          [checked]="isDeviceSelected(device)"
+          (change)="toggleDeviceSelection(device)"
+        />
+        <span class="device-name">{{ device.identifier }}</span>
+      </label>
+    </div>
+    <div class="device-count" *ngIf="!loadingDevices && availableDevices.length > 0">
+      Selected: {{ getSelectedDeviceCount() }} device(s)
+    </div>
+    <div class="no-devices" *ngIf="!loadingDevices && availableDevices.length === 0">
+      No devices available
+    </div>
+  </div>
+
+  <!-- Command Queue Section -->
+  <div class="section">
+    <div class="section-header">Commands to Send</div>
+
+    <!-- Command Queue List (Drag & Drop) -->
+    <div
+      class="command-queue"
+      cdkDropList
+      (cdkDropListDropped)="onDrop($event)"
+      *ngIf="commandQueue.length > 0"
+    >
+      <div
+        class="command-item"
+        *ngFor="let cmd of commandQueue; let i = index"
+        cdkDrag
+      >
+        <div class="command-drag-handle" cdkDragHandle>
+          <span class="drag-icon">&#9776;</span>
+        </div>
+
+        <div class="command-content">
+          <div class="command-header">
+            <span class="command-number">{{ i + 1 }}.</span>
+            <span class="command-code">{{ cmd.definition.code }}</span>
+            <span class="command-desc">{{ cmd.definition.description }}</span>
+          </div>
+
+          <!-- Arguments -->
+          <div class="command-arguments" *ngIf="cmd.definition.arguments.length > 0">
+            <div class="argument-row">
+              <div class="argument-input" *ngFor="let arg of cmd.definition.arguments">
+                <!-- Text Input -->
+                <ng-container *ngIf="arg.type === 'text'">
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    [(ngModel)]="cmd.argumentValues[arg.name]"
+                    [placeholder]="arg.placeholder || arg.label"
+                  />
+                  <label class="argument-label">{{ arg.label }}</label>
+                </ng-container>
+
+                <!-- Number Input -->
+                <ng-container *ngIf="arg.type === 'number'">
+                  <input
+                    type="number"
+                    class="form-control form-control-sm"
+                    [(ngModel)]="cmd.argumentValues[arg.name]"
+                    [placeholder]="arg.placeholder || arg.label"
+                    [min]="arg.min"
+                    [max]="arg.max"
+                  />
+                  <label class="argument-label">{{ arg.label }}</label>
+                </ng-container>
+
+                <!-- Select Input -->
+                <ng-container *ngIf="arg.type === 'select'">
+                  <select
+                    class="form-control form-control-sm"
+                    [(ngModel)]="cmd.argumentValues[arg.name]"
+                  >
+                    <option *ngFor="let opt of arg.options" [value]="opt">{{ opt }}</option>
+                  </select>
+                  <label class="argument-label">{{ arg.label }}</label>
+                </ng-container>
+
+                <!-- Boolean Input (Checkbox) -->
+                <ng-container *ngIf="arg.type === 'boolean'">
+                  <label class="boolean-input">
+                    <input
+                      type="checkbox"
+                      [(ngModel)]="cmd.argumentValues[arg.name]"
+                    />
+                    <span>{{ arg.label }}</span>
+                  </label>
+                </ng-container>
+              </div>
+            </div>
+          </div>
+
+          <div class="no-arguments" *ngIf="cmd.definition.arguments.length === 0">
+            <em>No arguments</em>
+          </div>
+        </div>
+
+        <button class="btn-remove" (click)="removeCommand(i)" title="Remove command">
+          &times;
+        </button>
+      </div>
+    </div>
+
+    <div class="no-commands" *ngIf="commandQueue.length === 0">
+      No commands added. Click "Add Command" to add commands to the queue.
+    </div>
+
+    <!-- Add Command Dropdown -->
+    <div class="add-command-wrapper">
+      <button class="btn btn-outline-primary btn-add-command" (click)="toggleDropdown()">
+        + Add Command
+      </button>
+
+      <div class="command-dropdown" *ngIf="showCommandDropdown">
+        <div class="dropdown-search">
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Search commands..."
+            [(ngModel)]="searchTerm"
+            (input)="onSearchInput()"
+            autofocus
+          />
+        </div>
+
+        <div class="dropdown-content">
+          <!-- Normal Commands Category -->
+          <div class="command-category" *ngIf="filteredNormalCommands.length > 0">
+            <div class="category-header">NORMAL COMMANDS</div>
+            <div
+              class="dropdown-item"
+              *ngFor="let cmd of filteredNormalCommands"
+              (click)="addCommand(cmd)"
+            >
+              <div class="item-body">
+                <div class="item-main">
+                  <span class="item-code">{{ cmd.code }}</span>
+                  <span class="item-desc">{{ cmd.name }}</span>
+                </div>
+                <div class="item-args" *ngIf="cmd.arguments.length > 0">{{ getArgumentDescription(cmd) }}</div>
+              </div>
+              <button class="btn-add-inline" (click)="$event.stopPropagation(); addCommand(cmd)">+</button>
+            </div>
+          </div>
+
+          <!-- Test Mode Commands Category -->
+          <div class="command-category" *ngIf="filteredTestCommands.length > 0">
+            <div class="category-header">TEST COMMANDS</div>
+            <div
+              class="dropdown-item"
+              *ngFor="let cmd of filteredTestCommands"
+              (click)="addCommand(cmd)"
+            >
+              <div class="item-body">
+                <div class="item-main">
+                  <span class="item-code">{{ cmd.code }}</span>
+                  <span class="item-desc">{{ cmd.name }}</span>
+                </div>
+                <div class="item-args" *ngIf="cmd.arguments.length > 0">{{ getArgumentDescription(cmd) }}</div>
+              </div>
+              <button class="btn-add-inline" (click)="$event.stopPropagation(); addCommand(cmd)">+</button>
+            </div>
+          </div>
+
+          <!-- No Results -->
+          <div class="no-results" *ngIf="filteredNormalCommands.length === 0 && filteredTestCommands.length === 0">
+            No commands match "{{ searchTerm }}"
+          </div>
+        </div>
+
+        <div class="dropdown-footer">
+          <button class="btn btn-sm btn-secondary" (click)="closeDropdown()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Command Preview Section -->
+  <div class="section" *ngIf="commandQueue.length > 0">
+    <div class="section-header">Command Preview</div>
+    <div class="command-preview">
+      <code>{{ buildCommandString() }}</code>
+    </div>
+  </div>
+
+  <!-- Send Section -->
+  <div class="section send-section">
+    <button
+      class="btn btn-primary btn-send"
+      [disabled]="!canSend()"
+      (click)="sendCommands()"
+    >
+      <span *ngIf="!sending">Send Commands</span>
+      <span *ngIf="sending">Sending...</span>
+    </button>
+
+    <!-- Result Message -->
+    <div
+      class="send-result"
+      *ngIf="lastSendResult"
+      [ngClass]="{'success': lastSendResult.success, 'error': !lastSendResult.success}"
+    >
+      {{ lastSendResult.message }}
+    </div>
+  </div>
+  </div>
+</div>

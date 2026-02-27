@@ -1,0 +1,31 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "./dist/out-tsc",
+    "paths": {
+      "widget-commands-manager": [
+        "dist/widget-commands-manager"
+      ]
+    },
+    "strict": false,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "sourceMap": true,
+    "declaration": false,
+    "downlevelIteration": true,
+    "experimentalDecorators": true,
+    "moduleResolution": "node",
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "ES2020",
+    "useDefineForClassFields": false,
+    "resolveJsonModule": true,
+    "lib": [
+      "es2018",
+      "dom"
+    ]
+  }
+}
