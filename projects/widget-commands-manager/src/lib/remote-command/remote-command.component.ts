@@ -1,4 +1,6 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import {
   CommandDefinition,
@@ -17,13 +19,17 @@ import { MatrixApiService } from '../services/matrix-api.service';
   templateUrl: './remote-command.component.html',
   styleUrls: ['./remote-command.component.css']
 })
-export class RemoteCommandComponent implements OnInit {
+export class RemoteCommandComponent implements OnInit, OnDestroy {
   @Input() config: RemoteCommandWidgetConfig;
 
-  // Device selection
-  availableDevices: Device[] = [];
-  selectedDeviceIds: Set<string> = new Set();
-  loadingDevices: boolean = false;
+  // Device autocomplete state
+  deviceSearchTerm: string = '';
+  deviceSuggestions: Device[] = [];
+  showDeviceSuggestions: boolean = false;
+  searchingDevices: boolean = false;
+  selectedDevices: Device[] = [];
+  private deviceSearch$ = new Subject<string>();
+  private deviceSearchSub: Subscription;
 
   // Command definitions (all available commands)
   commandDefinitions: CommandDefinition[] = COMMAND_DEFINITIONS;
@@ -52,12 +58,11 @@ export class RemoteCommandComponent implements OnInit {
     private matrixApiService: MatrixApiService
   ) {}
 
-  async ngOnInit(): Promise<void> {
+  ngOnInit(): void {
     // Validate configuration first
     this.validateConfig();
 
     if (!this.configValid) {
-      // Don't proceed if config is invalid
       return;
     }
 
@@ -68,8 +73,38 @@ export class RemoteCommandComponent implements OnInit {
     // Initialize filtered lists
     this.filterCommands();
 
-    // Load devices
-    await this.loadDevices();
+    // Set up debounced device search
+    this.deviceSearchSub = this.deviceSearch$.pipe(
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe(async term => {
+      if (term.length >= 2) {
+        this.searchingDevices = true;
+        try {
+          const results = await this.matrixApiService.searchDevicesForWidget(
+            this.config.widgetConfig.deviceId,
+            term
+          );
+          this.deviceSuggestions = results;
+          this.showDeviceSuggestions = true;
+        } catch (error) {
+          console.error('Device search failed:', error);
+          this.deviceSuggestions = [];
+        } finally {
+          this.searchingDevices = false;
+        }
+      } else {
+        this.deviceSuggestions = [];
+        this.showDeviceSuggestions = false;
+        this.searchingDevices = false;
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.deviceSearchSub) {
+      this.deviceSearchSub.unsubscribe();
+    }
   }
 
   /**
@@ -98,46 +133,43 @@ export class RemoteCommandComponent implements OnInit {
     this.configValid = this.missingConfig.length === 0;
   }
 
-  /**
-   * Loads devices from the API
-   */
-  private async loadDevices(): Promise<void> {
-    // Fetch from API if deviceId is configured
-    if (!this.config?.widgetConfig?.deviceId) {
-      console.warn('No deviceId configured in widget config. Cannot fetch devices.');
-      this.availableDevices = [];
-      return;
-    }
+  // ==================== Device Autocomplete ====================
 
-    this.loadingDevices = true;
-    try {
-      this.availableDevices = await this.matrixApiService.fetchDevicesForWidget(
-        this.config.widgetConfig.deviceId
-      );
-    } catch (error) {
-      console.error('Failed to load devices:', error);
-      this.availableDevices = [];
-    } finally {
-      this.loadingDevices = false;
-    }
+  onDeviceSearchInput(): void {
+    this.deviceSearch$.next(this.deviceSearchTerm);
   }
 
-  // ==================== Device Selection ====================
+  onSearchBlur(): void {
+    setTimeout(() => {
+      this.showDeviceSuggestions = false;
+    }, 150);
+  }
+
+  selectDevice(device: Device): void {
+    if (!this.isDeviceSelected(device)) {
+      this.selectedDevices.push(device);
+    }
+    this.deviceSearchTerm = '';
+    this.deviceSuggestions = [];
+    this.showDeviceSuggestions = false;
+  }
+
+  removeDevice(device: Device): void {
+    this.selectedDevices = this.selectedDevices.filter(
+      d => d.deviceInstanceId !== device.deviceInstanceId
+    );
+  }
+
+  clearAllDevices(): void {
+    this.selectedDevices = [];
+  }
 
   isDeviceSelected(device: Device): boolean {
-    return this.selectedDeviceIds.has(device.deviceInstanceId);
-  }
-
-  toggleDeviceSelection(device: Device): void {
-    if (this.selectedDeviceIds.has(device.deviceInstanceId)) {
-      this.selectedDeviceIds.delete(device.deviceInstanceId);
-    } else {
-      this.selectedDeviceIds.add(device.deviceInstanceId);
-    }
+    return this.selectedDevices.some(d => d.deviceInstanceId === device.deviceInstanceId);
   }
 
   getSelectedDeviceCount(): number {
-    return this.selectedDeviceIds.size;
+    return this.selectedDevices.length;
   }
 
   // ==================== Command Search/Filter ====================
@@ -218,7 +250,7 @@ export class RemoteCommandComponent implements OnInit {
       return;
     }
 
-    if (this.selectedDeviceIds.size === 0) {
+    if (this.selectedDevices.length === 0) {
       this.lastSendResult = { success: false, message: 'No devices selected' };
       return;
     }
@@ -227,12 +259,11 @@ export class RemoteCommandComponent implements OnInit {
     this.lastSendResult = null;
 
     const commandString = this.buildCommandString();
-    const selectedDevices = this.availableDevices.filter(d => this.selectedDeviceIds.has(d.deviceInstanceId));
 
     try {
       const results = await this.remoteCommandService.sendCommandsToDevices(
         this.config,
-        selectedDevices,
+        this.selectedDevices,
         commandString
       );
 
@@ -264,7 +295,7 @@ export class RemoteCommandComponent implements OnInit {
 
   canSend(): boolean {
     return this.commandQueue.length > 0 &&
-           this.selectedDeviceIds.size > 0 &&
+           this.selectedDevices.length > 0 &&
            !this.sending &&
            this.areAllArgumentsValid();
   }

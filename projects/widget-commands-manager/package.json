@@ -1,6 +1,6 @@
 {
   "name": "@regenesismed/widget-commands-manager",
-  "version": "0.0.1",
+  "version": "0.2.0",
   "description": "Angular widget for managing remote commands to Reprieve devices. Designed for Matrix Connect integration.",
 
   "keywords": [
@@ -40,5 +40,9 @@
     "tslib": "^2.3.0"
   },
 
-  "sideEffects": false
+  "sideEffects": false,
+
+  "publishConfig": {
+    "access": "public"
+  }
 }

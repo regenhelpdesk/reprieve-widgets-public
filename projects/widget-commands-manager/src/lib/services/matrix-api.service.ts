@@ -86,6 +86,28 @@ export class MatrixApiService {
   }
 
   /**
+   * Searches device instances by identifier prefix for autocomplete.
+   * @param deviceId Device type ID to filter by
+   * @param searchTerm Identifier prefix to search for
+   * @param limit Maximum number of results to return
+   */
+  async searchDevicesForWidget(deviceId: string, searchTerm: string, limit = 20): Promise<DeviceInstanceSimple[]> {
+    try {
+      const page = await lastValueFrom(
+        this.getDeviceInstances(deviceId, searchTerm, null, null, limit, 0, 'identifier', 'ASC')
+      );
+
+      return page.content.map(item => ({
+        deviceInstanceId: item.deviceInstanceId,
+        identifier: item.identifier
+      }));
+    } catch (error) {
+      console.error('Error searching devices:', error);
+      return [];
+    }
+  }
+
+  /**
    * Posts device data to the Matrix API.
    * Generic method for saving data to device data models.
    *

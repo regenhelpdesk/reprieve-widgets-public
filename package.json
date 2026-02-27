@@ -13,8 +13,8 @@
     "version:minor": "cd projects/widget-commands-manager && npm version minor && cd ../..",
     "version:major": "cd projects/widget-commands-manager && npm version major && cd ../..",
 
-    "publish:lib": "npm run build:lib && cd dist/widget-commands-manager && npm publish",
-    "publish:lib:dry-run": "npm run build:lib && cd dist/widget-commands-manager && npm publish --dry-run",
+    "publish:lib": "npm run build:lib && cd dist/widget-commands-manager && npm publish --access public",
+    "publish:lib:dry-run": "npm run build:lib && cd dist/widget-commands-manager && npm publish --access public --dry-run",
 
     "release:patch": "npm run version:patch && npm run publish:lib",
     "release:minor": "npm run version:minor && npm run publish:lib",

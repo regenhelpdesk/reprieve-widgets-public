@@ -26,25 +26,52 @@
   <div class="section">
     <div class="section-header">Target Devices</div>
 
-    <div *ngIf="loadingDevices" class="loading-devices">
-      Loading devices...
+    <!-- Search input -->
+    <div class="device-search-wrapper">
+      <input
+        type="text"
+        class="form-control device-search-input"
+        placeholder="Search device identifier..."
+        [(ngModel)]="deviceSearchTerm"
+        (input)="onDeviceSearchInput()"
+        (focus)="showDeviceSuggestions = deviceSuggestions.length > 0"
+        (blur)="onSearchBlur()"
+      />
+
+      <!-- Suggestions dropdown -->
+      <div class="device-suggestions" *ngIf="showDeviceSuggestions">
+        <div class="suggestion-loading" *ngIf="searchingDevices">Searching...</div>
+        <div
+          class="suggestion-item"
+          *ngFor="let d of deviceSuggestions"
+          [class.already-selected]="isDeviceSelected(d)"
+          (mousedown)="selectDevice(d)"
+        >
+          {{ d.identifier }}
+          <span *ngIf="isDeviceSelected(d)" class="selected-mark">&#10003;</span>
+        </div>
+        <div class="no-suggestions" *ngIf="!searchingDevices && deviceSuggestions.length === 0">
+          No devices found
+        </div>
+      </div>
     </div>
 
-    <div class="device-list" *ngIf="!loadingDevices">
-      <label class="device-item" *ngFor="let device of availableDevices">
-        <input
-          type="checkbox"
-          [checked]="isDeviceSelected(device)"
-          (change)="toggleDeviceSelection(device)"
-        />
-        <span class="device-name">{{ device.identifier }}</span>
-      </label>
+    <!-- Selected chips -->
+    <div class="selected-chips" *ngIf="selectedDevices.length > 0">
+      <span class="device-chip" *ngFor="let d of selectedDevices">
+        {{ d.identifier }}
+        <button class="chip-remove" (click)="removeDevice(d)" title="Remove">&times;</button>
+      </span>
     </div>
-    <div class="device-count" *ngIf="!loadingDevices && availableDevices.length > 0">
-      Selected: {{ getSelectedDeviceCount() }} device(s)
+
+    <!-- Footer: count + clear -->
+    <div class="device-footer" *ngIf="selectedDevices.length > 0">
+      <span>Selected: {{ getSelectedDeviceCount() }} device(s)</span>
+      <button class="btn-clear-all" (click)="clearAllDevices()">Clear all</button>
     </div>
-    <div class="no-devices" *ngIf="!loadingDevices && availableDevices.length === 0">
-      No devices available
+
+    <div class="no-devices" *ngIf="selectedDevices.length === 0 && !deviceSearchTerm">
+      Search above to add target devices
     </div>
   </div>
 
