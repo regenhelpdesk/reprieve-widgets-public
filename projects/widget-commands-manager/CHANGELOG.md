@@ -1,23 +1,45 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to `@regenesismed/widget-commands-manager` are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.0.1] - 2026-02-13
+## [0.2.1] - 2026-03-01
 
 ### Added
-- Initial release of Widget Commands Manager
-- Remote command component with device selection
-- Command queue with drag-and-drop reordering
-- Support for Normal and Test command categories
-- Dynamic command arguments (text, number, select, boolean)
-- Command preview with pipe-separated format
-- Batch command sending to multiple devices
-- Matrix API service for device data integration
-- Config validation with error display
-- Device loading from Matrix API
-- Success/failure tracking per device
+- Device suggestion dropdown now stays open for multi-selection — click multiple
+  entries without the list closing between picks.
+- Checkbox UI in suggestions: each item shows a blue filled checkbox when selected,
+  empty square when not.
+- Command queue limit of 8 per request: the "Add Command" button is disabled when
+  the limit is reached, with an amber notice explaining how to proceed.
 
-[0.0.1]: https://github.com/regenhelpdesk/reprieve-widgets-public/src/v0.0.1/
+### Removed
+- `ngx-pagination` removed from peer dependencies and from the Angular module
+  (unused since the autocomplete device search was introduced in 0.2.0).
+
+---
+
+## [0.2.0] - 2026-02-27
+
+### Added
+- **Autocomplete device search**: replaced the flat checkbox list (capped at 1000)
+  with a server-side search input. Results are fetched after 2+ characters with a
+  300 ms debounce, capped at 20 suggestions.
+- Selected devices are displayed as removable chips below the search input.
+- "Clear all" button and selected count footer in the Target Devices section.
+- `MatrixApiService.searchDevicesForWidget()` method for prefix-based device search.
+
+### Changed
+- Device selection state moved from `Set<string>` + flat list to `Device[]` chip list.
+
+---
+
+## [0.1.0] - 2026-02-27
+
+### Added
+- Initial release of the Remote Command widget.
+- Drag-and-drop command queue with argument inputs (text, number, select, boolean).
+- Command search/filter dropdown.
+- Send commands to multiple devices via the Matrix API.
