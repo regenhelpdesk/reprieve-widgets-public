@@ -12,7 +12,6 @@ npm install @regenesismed/widget-commands-manager
 
 - Angular ~15.2.0
 - @angular/cdk ~15.2.0
-- ngx-pagination ^6.0.0
 
 ## Usage
 

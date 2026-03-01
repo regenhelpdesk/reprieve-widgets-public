@@ -37,6 +37,7 @@ export class RemoteCommandComponent implements OnInit, OnDestroy {
   testCommands: CommandDefinition[] = [];
 
   // Command queue (commands to send)
+  readonly MAX_COMMANDS = 8;
   commandQueue: CommandInstance[] = [];
 
   // Search/filter state
@@ -146,12 +147,13 @@ export class RemoteCommandComponent implements OnInit, OnDestroy {
   }
 
   selectDevice(device: Device): void {
-    if (!this.isDeviceSelected(device)) {
+    if (this.isDeviceSelected(device)) {
+      this.selectedDevices = this.selectedDevices.filter(
+        d => d.deviceInstanceId !== device.deviceInstanceId
+      );
+    } else {
       this.selectedDevices.push(device);
     }
-    this.deviceSearchTerm = '';
-    this.deviceSuggestions = [];
-    this.showDeviceSuggestions = false;
   }
 
   removeDevice(device: Device): void {

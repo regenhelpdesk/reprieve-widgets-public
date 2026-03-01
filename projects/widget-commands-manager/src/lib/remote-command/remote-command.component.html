@@ -44,11 +44,11 @@
         <div
           class="suggestion-item"
           *ngFor="let d of deviceSuggestions"
-          [class.already-selected]="isDeviceSelected(d)"
-          (mousedown)="selectDevice(d)"
+          [class.is-selected]="isDeviceSelected(d)"
+          (mousedown)="$event.preventDefault(); selectDevice(d)"
         >
+          <span class="suggestion-checkbox" [class.checked]="isDeviceSelected(d)"></span>
           {{ d.identifier }}
-          <span *ngIf="isDeviceSelected(d)" class="selected-mark">&#10003;</span>
         </div>
         <div class="no-suggestions" *ngIf="!searchingDevices && deviceSuggestions.length === 0">
           No devices found
@@ -172,9 +172,14 @@
 
     <!-- Add Command Dropdown -->
     <div class="add-command-wrapper">
-      <button class="btn btn-outline-primary btn-add-command" (click)="toggleDropdown()">
+      <button class="btn btn-outline-primary btn-add-command"
+              [disabled]="commandQueue.length >= MAX_COMMANDS"
+              (click)="toggleDropdown()">
         + Add Command
       </button>
+      <div class="command-limit-notice" *ngIf="commandQueue.length >= MAX_COMMANDS">
+        Limit of {{ MAX_COMMANDS }} commands per request reached. Remove a command to add another.
+      </div>
 
       <div class="command-dropdown" *ngIf="showCommandDropdown">
         <div class="dropdown-search">
