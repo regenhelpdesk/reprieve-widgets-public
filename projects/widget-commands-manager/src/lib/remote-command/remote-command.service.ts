@@ -84,10 +84,8 @@ export class RemoteCommandService {
     const propertyCode = "Commands";
 
     const requestBody = {
-      // deviceDataModelId: config.widgetConfig.deviceId!,
-      deviceDataModelId: "18ebef7d-5ebf-4471-8246-4453db7a7583",
-      // devicePropertySetId: config.widgetConfig.devicePropertySetId!, 
-      devicePropertySetId: "006b3375-c713-4cea-bacf-279325df8a46",
+      deviceDataModelId: config.widgetConfig.commandDataModelId!,
+      devicePropertySetId: config.widgetConfig.commandPropertySetId!, 
       // deviceDataId: null, // null for new data, or can be used to update existing data
       ownerId: deviceInstanceId, // Device instance ID is the owner
       data: {

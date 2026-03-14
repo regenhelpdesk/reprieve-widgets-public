@@ -1,8 +1,7 @@
 {
   "name": "@regenesismed/widget-commands-manager",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Angular widget for managing remote commands to Reprieve devices. Designed for Matrix Connect integration.",
-
   "keywords": [
     "angular",
     "widget",
@@ -12,35 +11,26 @@
     "matrix-connect",
     "angular-library"
   ],
-
   "author": "Regenesis",
-
   "license": "MIT",
-
   "repository": {
     "type": "git",
     "url": "https://github.com/regenhelpdesk/reprieve-widgets-public.git",
     "directory": "reprieve-widgets-public/projects/widget-commands-manager"
   },
-
   "bugs": {
     "url": "https://github.com/regenhelpdesk/reprieve-widgets-public/issues"
   },
-
   "homepage": "https://github.com/regenhelpdesk/reprieve-widgets-public/#readme",
-
   "peerDependencies": {
     "@angular/common": "~15.2.0",
     "@angular/core": "~15.2.0",
     "@angular/cdk": "~15.2.0"
   },
-
   "dependencies": {
     "tslib": "^2.3.0"
   },
-
   "sideEffects": false,
-
   "publishConfig": {
     "access": "public"
   }

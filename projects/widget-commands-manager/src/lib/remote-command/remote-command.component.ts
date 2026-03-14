@@ -128,7 +128,16 @@ export class RemoteCommandComponent implements OnInit, OnDestroy {
 
     // Check required fields
     if (!this.config.widgetConfig.deviceId) {
-      this.missingConfig.push('widgetConfig.deviceId - Reprieve device data model ID');
+      this.missingConfig.push('widgetConfig.deviceId - Reprieve device Device ID');
+    }
+    if (!this.config.widgetConfig.commandDataModelId) {
+      this.missingConfig.push('widgetConfig.commandDataModelId - Reprieve Remote Commands data model ID');
+    }
+    if (!this.config.widgetConfig.commandPropertySetId) {
+      this.missingConfig.push('widgetConfig.commandPropertySetId - Reprieve Command(s) property set ID');
+    }
+    if (!this.config.widgetConfig.commandPropertyCode) {
+      this.missingConfig.push('widgetConfig.commandPropertyCode - Reprieve Command(s) property code');
     }
 
     this.configValid = this.missingConfig.length === 0;
@@ -291,6 +300,22 @@ export class RemoteCommandComponent implements OnInit, OnDestroy {
     } finally {
       this.sending = false;
     }
+  }
+
+  // ==================== Public API ====================
+
+  public refresh(): void {
+    this.selectedDevices = [];
+    this.deviceSearchTerm = '';
+    this.deviceSuggestions = [];
+    this.showDeviceSuggestions = false;
+    this.searchingDevices = false;
+    this.commandQueue = [];
+    this.searchTerm = '';
+    this.showCommandDropdown = false;
+    this.sending = false;
+    this.lastSendResult = null;
+    this.filterCommands();
   }
 
   // ==================== Validation ====================
